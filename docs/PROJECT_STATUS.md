@@ -14,7 +14,7 @@ es una frontera de seguridad.
 La base de codigo tiene una arquitectura clara y controles explicitos para
 sesiones, CSRF, archivos, SQL de solo lectura, RAG con ACL y secretos. Antes de
 esta revision, un clon limpio no podia completar el flujo oficial del frontend
-porque faltaba `frontend/pnpm-lock.yaml`.
+porque el flujo oficial y sus lockfiles no estaban alineados.
 
 ## Tecnologias y responsabilidades
 

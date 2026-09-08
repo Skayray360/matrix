@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Interfaz de Matrix RH (React + TypeScript + Vite)",
   "author": "Aldo Garcia",
-  "packageManager": "pnpm@9.15.9+sha512.aARhQYk8ZvrQHAeSMRKOmvuJ74fiaR1p5NQO7iKJiClf1GghgbrlW1hBjDolO95lpQXsfF-UA-zlzDzTfc8lMQ",
+  "packageManager": "npm@10.9.0",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

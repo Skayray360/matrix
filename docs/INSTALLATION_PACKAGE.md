@@ -21,7 +21,7 @@ entrada; el instalador valida los prerrequisitos y genera secretos locales.
 ```
 
 El empaquetador existente rechaza secretos, archivos runtime y entregas sin
-`pnpm-lock.yaml` o sin hash criptografico del gestor. El ZIP se crea junto a la
+`package-lock.json` o sin una version npm exacta. El ZIP se crea junto a la
 carpeta del repositorio.
 
 ## Evolucion recomendada

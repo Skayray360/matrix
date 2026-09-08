@@ -14,8 +14,8 @@ manifiesto declarado:
    ``install`` o ``postinstall``. Es el vector por el que se propaga el gusano.
 3. **Indicadores de compromiso** -- nombres de archivo y patrones de contenido
    asociados a exfiltracion de credenciales.
-4. **Instalacion reproducible** -- existe ``pnpm-lock.yaml`` (el gestor oficial
-   es pnpm) y ``.npmrc`` declara ``ignore-scripts=true``.
+4. **Instalacion reproducible** -- existe ``package-lock.json`` (npm es el
+   gestor oficial) y ``.npmrc`` declara ``ignore-scripts=true``.
 
 Las comprobaciones 1-3 recorren el arbol ``node_modules`` REAL y son agnosticas
 al gestor: funcionan igual con pnpm o npm. Solo la comprobacion 4 es especifica
@@ -238,25 +238,19 @@ def check_indicators(report: Report, denylist: dict, root: Path) -> None:
 def check_reproducible_install(report: Report) -> None:
     """Verifica lockfile y que los scripts esten bloqueados por configuracion.
 
-    El gestor oficial es pnpm, por lo que el lockfile canonico es
-    ``pnpm-lock.yaml``. Se acepta ``package-lock.json`` como fallback transitorio
-    mientras se completa la migracion (``pnpm import``): la instalacion sigue
-    siendo reproducible con cualquiera de los dos. La ausencia de AMBOS es un
-    hallazgo bloqueante.
+    El gestor oficial es npm y el flujo desplegado usa ``npm ci``. Por ello,
+    cualquier otro lockfile es irrelevante para este control.
     """
-    pnpm_lock = FRONTEND / "pnpm-lock.yaml"
     npm_lock = FRONTEND / "package-lock.json"
-    if pnpm_lock.exists():
-        report.checks["lockfile"] = "OK (pnpm-lock.yaml)"
-    elif npm_lock.exists():
-        report.checks["lockfile"] = "OK (package-lock.json; migrar a pnpm-lock.yaml)"
+    if npm_lock.exists():
+        report.checks["lockfile"] = "OK (package-lock.json)"
     else:
         report.checks["lockfile"] = "FAIL"
         report.findings.append(
             Finding(
                 severity="critical",
                 kind="sin_lockfile",
-                detail="falta frontend/pnpm-lock.yaml: la instalacion no es reproducible",
+                detail="falta frontend/package-lock.json: npm ci no es reproducible",
             )
         )
 
@@ -275,14 +269,12 @@ def check_reproducible_install(report: Report) -> None:
         )
 
 
-#: Regex del campo ``packageManager`` con hash de integridad de corepack, p. ej.
-#: ``pnpm@9.15.9+sha512.<hash>``. El sufijo ``+sha...`` es lo que hace que
-#: corepack VERIFIQUE criptograficamente el binario descargado.
-_PM_WITH_HASH = re.compile(r"^[a-z]+@\d+\.\d+\.\d+\+sha\d+\.[A-Za-z0-9+/=_-]+$")
+#: npm viene con Node; fijamos su version exacta para hacer auditable el toolchain.
+_NPM_EXACT = re.compile(r"^npm@\d+\.\d+\.\d+$")
 
 
 def package_manager_pin(frontend: Path | None = None) -> tuple[str, bool]:
-    """Devuelve ``(valor_packageManager, tiene_hash_de_integridad)``.
+    """Devuelve ``(valor_packageManager, es_npm_con_version_exacta)``.
 
     Reutilizable por el empaquetado de release, que exige el hash de forma
     bloqueante.
@@ -295,39 +287,32 @@ def package_manager_pin(frontend: Path | None = None) -> tuple[str, bool]:
     pm = data.get("packageManager")
     if not isinstance(pm, str) or not pm:
         return "", False
-    return pm, bool(_PM_WITH_HASH.match(pm))
+    return pm, bool(_NPM_EXACT.match(pm))
 
 
 def check_package_manager_pin(report: Report) -> None:
-    """El gestor (pnpm) debe fijarse en package.json con hash de integridad.
-
-    corepack descarga el binario del gestor la primera vez. Sin el hash
-    (``pnpm@x.y.z+sha512...``) la descarga solo se apoya en TLS y el registro;
-    con el hash, corepack lo verifica criptograficamente. Se reporta como AVISO
-    (no rompe desarrollo). El empaquetado de release lo exige de forma
-    bloqueante: no debe publicarse sin integridad del gestor fijada.
-    """
-    pm, con_hash = package_manager_pin()
+    """npm debe declararse con version exacta en package.json."""
+    pm, valido = package_manager_pin()
     if not pm:
         report.checks["gestor_fijado"] = "REVISAR (sin packageManager)"
         report.findings.append(
             Finding(
                 severity="warning",
                 kind="gestor_no_fijado",
-                detail="frontend/package.json no declara packageManager (fije pnpm@x.y.z+sha512...)",
+                detail="frontend/package.json no declara packageManager (fije npm@x.y.z)",
             )
         )
-    elif not con_hash:
-        report.checks["gestor_fijado"] = "REVISAR (sin hash de integridad)"
+    elif not valido:
+        report.checks["gestor_fijado"] = "REVISAR (se esperaba npm@x.y.z)"
         report.findings.append(
             Finding(
                 severity="warning",
-                kind="gestor_sin_hash_integridad",
-                detail=f"packageManager={pm} sin sufijo +sha; corepack no verifica el binario descargado",
+                kind="gestor_no_canonico",
+                detail=f"packageManager={pm}; se esperaba npm con version exacta",
             )
         )
     else:
-        report.checks["gestor_fijado"] = "OK (con hash de integridad)"
+        report.checks["gestor_fijado"] = f"OK ({pm})"
 
 
 def run(*, allowed_script_packages: set[str] | None = None) -> Report:
@@ -339,7 +324,7 @@ def run(*, allowed_script_packages: set[str] | None = None) -> Report:
 
     if not packages:
         report.checks["arbol_instalado"] = (
-            "AUSENTE (ejecute 'corepack pnpm install --frozen-lockfile --ignore-scripts' en frontend/)"
+            "AUSENTE (ejecute 'npm ci --ignore-scripts' en frontend/)"
         )
     else:
         report.checks["arbol_instalado"] = f"OK ({len(packages)} manifiestos)"
@@ -353,7 +338,7 @@ def run(*, allowed_script_packages: set[str] | None = None) -> Report:
 
 
 def render(report: Report) -> str:
-    lineas = ["", "=== CADENA DE SUMINISTRO (pnpm) ===", ""]
+    lineas = ["", "=== CADENA DE SUMINISTRO (npm) ===", ""]
     for nombre, estado in report.checks.items():
         marca = "[ OK ]" if estado.startswith("OK") else "[FAIL]"
         if estado.startswith(("AUSENTE", "REVISAR")):

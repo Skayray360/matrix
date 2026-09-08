@@ -265,36 +265,30 @@ manifiesto declarado:
    asociados a exfiltración: `webhook.site`, `npmjs.help`,
    `api.github.com/user/repos`, lectura de `NPM_TOKEN`/`GITHUB_TOKEN` seguida de
    una petición de red.
-4. **Reproducibilidad** — existe `pnpm-lock.yaml` y `.npmrc` declara
+4. **Reproducibilidad** — existe `package-lock.json` y `.npmrc` declara
    `ignore-scripts=true`.
-5. **Integridad del gestor** — `packageManager` en `package.json` fija pnpm con
-   hash de integridad (`pnpm@x.y.z+sha512...`). Aviso en desarrollo, bloqueante
-   en release (ver más abajo).
+5. **Version del gestor** — `packageManager` fija una version exacta de npm,
+   que ya viene distribuido con Node.
 
 Se ejecuta en el **preflight** (cada arranque), en el **instalador** (bloquea la
 compilación si falla), en el **quality gate** y en `windows\Validate-MatrixRH.ps1`.
 
-### Riesgos del gestor (corepack / `packageManager`) y su mitigación
+### Riesgos del gestor y su mitigación
 
-El frontend usa **pnpm** ejecutado por **corepack** (incluido en Node), con la
-versión fijada en `packageManager`. Esto añade una superficie propia que se
-gestiona así:
+El frontend usa **npm**, incluido en Node, con version fijada en
+`packageManager`:
 
 | Riesgo | Mitigación |
 |---|---|
-| corepack **descarga el binario de pnpm** la primera vez; sin hash, la descarga sólo confía en TLS y el registro | Fijar `packageManager` **con hash de integridad** (`pnpm@x.y.z+sha512...`): corepack **verifica criptográficamente** el binario. `verify_supply_chain` lo avisa; `package_release` lo **exige** (falla-cerrado). |
-| **Fetch externo** en instalación (rompe la operación offline) | Pre-provisionar pnpm una vez con `corepack pack` y llevar el artefacto al equipo aislado; después no hay red en instalación. |
-| **Descarga silenciosa** (`COREPACK_ENABLE_DOWNLOAD_PROMPT=0`, necesario para instalar desatendido) | Segura porque la versión la fuerza corepack y el binario se verifica por el hash. |
-| Cambiar de gestor **no** reduce el riesgo de gusanos | pnpm usa el **mismo registro** que npm; la defensa real son los puntos 1–5 de arriba. |
+| `package-lock.json` desincronizado | `npm ci` falla cerrado y no modifica el lock. |
+| Scripts de ciclo de vida comprometidos | `.npmrc` y la CLI fuerzan `ignore-scripts=true`. |
+| Version distinta del gestor | `packageManager` declara `npm@10.9.0` y el harness la hace visible. |
 
-Para fijar el hash, en `frontend/` con red una sola vez:
+Para instalar el arbol exacto:
 
 ```bash
-corepack use pnpm@9.15.9
+npm ci --ignore-scripts
 ```
-
-Escribe `packageManager: "pnpm@9.15.9+sha512.<hash>"` en `package.json`. A partir
-de ahí, cualquier equipo que provisione pnpm por corepack verifica ese hash.
 
 El control está cubierto por pruebas que construyen árboles sintéticos con un
 paquete comprometido, un `postinstall` y un IOC, y verifican que **dispara**
@@ -314,12 +308,12 @@ exacta, lista de versiones o el comodín `*`.
 
 | Comando | Umbral |
 |---|---|
-| `pnpm audit --prod --audit-level low` | **Bloqueante**: es lo que se despliega |
-| `pnpm audit` (incluye dev) | Informativo pero visible; no se oculta |
+| `npm audit --omit=dev --audit-level low` | **Bloqueante**: es lo que se despliega |
+| `npm audit` (incluye dev) | Informativo pero visible; no se oculta |
 | `pip-audit --strict` | Informativo, revisado por el Agente de Ciberseguridad |
 | `bandit -r app` | Bloqueante |
 
-Estado actual: **0 vulnerabilidades** en ambos modos de `pnpm audit`.
+Estado actual: **0 vulnerabilidades** en ambos modos de `npm audit`.
 
 ### Resto de la cadena
 
@@ -328,7 +322,7 @@ Estado actual: **0 vulnerabilidades** en ambos modos de `pnpm audit`.
   un espejo.
 - Extras opcionales para drivers de motores no usados: reducen la superficie.
 - Playwright descarga navegadores sólo de forma **explícita**
-  (`corepack pnpm run e2e:install`), nunca implícita al instalar.
+  (`npm run e2e:install`), nunca implícita al instalar.
 
 ---
 

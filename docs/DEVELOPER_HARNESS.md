@@ -39,13 +39,11 @@ El frontend tambien expone `npm run check` y `npm run ci`.
 
 ## Locks y Corepack
 
-Docker y los instaladores existentes usan pnpm 9.15.9 con hash de integridad. El
-harness usa `npm ci`, disponible con Node, y evita depender de Corepack para el
-gate diario. Ambos locks se mantienen versionados y
-deben actualizarse juntos cuando cambie `package.json`:
+Docker, instaladores y harness usan npm con `package-lock.json`. Esto evita
+depender de Corepack y mantiene un unico lock canónico. Actualicelo cuando
+cambie `package.json`:
 
 ```powershell
 cd frontend
 npm install --package-lock-only --ignore-scripts
-npx --yes pnpm@9.15.9 install --lockfile-only --ignore-scripts
 ```

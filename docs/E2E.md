@@ -16,14 +16,14 @@ INICIAR_MATRIX_RH.bat -NoBrowser
 ```
 ```bat
 cd frontend
-corepack pnpm run e2e
+npm run e2e
 ```
 
 Primera vez, instalar el navegador:
 
 ```bat
 cd frontend
-corepack pnpm run e2e:install
+npm run e2e:install
 ```
 
 `windows\Validate-MatrixRH.ps1` arranca el backend, ejecuta Playwright y lo detiene.
@@ -114,5 +114,5 @@ Algunos gates se validan de forma más fiable en otra suite; se documenta dónde
 1. Backend arriba y `/ready` en `true`.
 2. Conocimiento indexado (`scripts.bootstrap ingest`).
 3. Usuarios sintéticos creados (`scripts.bootstrap seed`).
-4. Frontend compilado (`corepack pnpm run build`).
+4. Frontend compilado (`npm run build`).
 5. `AUTH_PROVIDER=local_test` con `APP_ENV=development` o `test`.

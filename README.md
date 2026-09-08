@@ -386,8 +386,8 @@ matrix-rh:
     tests:                         # Vitest (componentes) + Playwright (E2E)
       e2e:                         #   auth, authorization, documents-memory, operations
     dist:                          # Build precompilada servida por el backend
-    package.json:                  # Dependencias (pnpm; ver §12-bis)
-    pnpm-lock.yaml:                 # lockfile congelado para instalación reproducible
+    package.json:                  # Dependencias (npm; ver §12-bis)
+    package-lock.json:             # lockfile congelado para instalación reproducible
 
   config:                          # Configuración de negocio versionada
     authorization:                 # Políticas fuera de código
@@ -518,8 +518,7 @@ línea de comandos y no tienen fallback a una instalación sin fijar.
 
 > **Nota de seguridad.** Cambiar de gestor no elimina el riesgo por sí solo:
 > La defensa real es `ignore-scripts` + lockfile congelado + la verificación de
-> abajo. `pnpm-lock.yaml` se conserva para compatibilidad de entregas previas,
-> pero Docker y los instaladores ya no dependen de Corepack.
+> abajo. Docker, instaladores y gates usan el mismo `package-lock.json`.
 
 Verificación del árbol instalado (lista de bloqueo, scripts, indicadores de
 compromiso y reproducibilidad):

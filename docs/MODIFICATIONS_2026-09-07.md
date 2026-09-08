@@ -4,9 +4,8 @@
 
 ## Cambios
 
-- Se incorporo el `pnpm-lock.yaml` requerido por Docker e instaladores.
-- Se fijo pnpm 9.15.9 con su integridad SHA-512 en `packageManager`.
-- Docker y el harness usan `npm ci` para evitar fallos de claves obsoletas en
+- Se consolido npm 10.9.0 como gestor canonico con `package-lock.json`.
+- Docker, instaladores y harness usan `npm ci` para evitar fallos de claves obsoletas en
   versiones de Corepack distribuidas con algunos Node 22.
 - Se sustituyo el healthcheck ficticio de Qdrant por una comprobacion TCP y el
   backend ahora espera `service_healthy`.
@@ -26,3 +25,13 @@ restriccion de autenticacion local a desarrollo/pruebas.
 El gate offline completo fue validado en este host con Python 3.12 administrado
 por uv. La pila live requiere Docker Desktop activo y servicios/modelos locales.
 Un gate omitido no equivale a aprobado.
+
+## Correcciones posteriores al code review (8 de septiembre)
+
+- npm quedo como unico gestor canonico; se retiro `pnpm-lock.yaml`.
+- Empaquetador, supply-chain gate, quality gate, preflight, E2E y documentacion
+  ahora consumen `package-lock.json`.
+- El empaquetador falla si falta el lock realmente utilizado por `npm ci`.
+- Se endurecio la prueba del paquete con script permitido para rechazar cualquier
+  hallazgo adicional inesperado.
+- Se agrego `.github/workflows/quality.yml` para ejecutar el gate en cada PR.
