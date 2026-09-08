@@ -71,7 +71,9 @@ EXCLUDED_DIRS = frozenset(
 )
 
 #: Archivos generados o de terceros que no son codigo propio.
-EXCLUDED_NAMES = frozenset({"package-lock.json", "pnpm-lock.yaml", "package.json", "tsconfig.json", "tsconfig.node.json"})
+EXCLUDED_NAMES = frozenset(
+    {"package-lock.json", "pnpm-lock.yaml", "package.json", "tsconfig.json", "tsconfig.node.json"}
+)
 
 #: Rutas excluidas por naturaleza del contenido, no por ser generadas.
 #:

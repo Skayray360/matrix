@@ -137,7 +137,12 @@ class TestScriptsDeInstalacion:
         crear_paquete(arbol, "esbuild", "0.24.2", scripts={"postinstall": "node install.js"})
 
         report = vsc.run(allowed_script_packages={"esbuild"})
-        assert [f.kind for f in report.findings] == ["script_de_instalacion_permitido"]
+        # El fixture no declara packageManager, por lo que el aviso independiente
+        # del gestor tambien es esperado. Este caso solo verifica que el script
+        # permitido no se clasifique como bloqueo.
+        kinds = [f.kind for f in report.findings]
+        assert "script_de_instalacion_permitido" in kinds
+        assert "script_de_instalacion" not in kinds
 
     def test_un_script_normal_no_dispara(self, arbol: Path):
         """`build` o `test` no son vectores de instalacion."""

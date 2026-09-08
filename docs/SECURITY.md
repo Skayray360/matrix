@@ -217,12 +217,9 @@ en el ciclo de vida de instalación, roba credenciales del entorno (`NPM_TOKEN`,
 para propagarse. La víctima no necesita ejecutar la aplicación: basta con
 instalar.
 
-> **El gestor por sí solo no es la defensa.** El frontend usa **pnpm** (vía
-> corepack), pero pnpm descarga del **mismo registro** que npm y es igual de
-> vulnerable a un paquete comprometido. Lo que protege es no ejecutar scripts +
-> lockfile congelado + la verificación del árbol. pnpm aporta márgenes: árbol
-> `node_modules` estricto (sin dependencias fantasma) y opción de retrasar
-> versiones recién publicadas.
+> **El gestor por si solo no es la defensa.** El frontend se instala con npm.
+> Lo que protege es no ejecutar scripts + lockfile congelado + la verificacion
+> del arbol.
 
 ### El control central: no ejecutar scripts de instalación
 
@@ -235,12 +232,12 @@ Con esa línea, **aunque un paquete comprometido entre al árbol, su código no 
 ejecuta durante la instalación**. Es viable en este proyecto porque ninguna
 dependencia necesita un script de instalación: se verifica automáticamente.
 
-### Nunca sin banderas, siempre `pnpm install --frozen-lockfile --ignore-scripts`
+### Nunca sin banderas, siempre `npm ci --ignore-scripts`
 
 | Comando | Comportamiento |
 |---|---|
 | `npm install` / `pnpm install` (sin flags) | Puede **resolver rangos** y traer una versión publicada hace minutos. Ejecuta scripts. |
-| `corepack pnpm install --frozen-lockfile --ignore-scripts` | Instala **exactamente** lo que fija `pnpm-lock.yaml`. No ejecuta scripts. Falla si el lockfile no está sincronizado. |
+| `npm ci --ignore-scripts` | Instala **exactamente** lo que fija `package-lock.json`. No ejecuta scripts. Falla si el lockfile no está sincronizado. |
 
 Aplicado en `windows/Install-MatrixRH.ps1`, `scripts/matrixrh.sh`,
 `backend/Dockerfile` y documentado en el README. El Dockerfile **no** tiene

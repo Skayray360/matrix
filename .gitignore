@@ -15,6 +15,7 @@ __pycache__/
 htmlcov/
 .coverage
 coverage.xml
+*.tsbuildinfo
 
 node_modules/
 dist/

@@ -223,20 +223,15 @@ else {
     $node = Get-Command node -ErrorAction SilentlyContinue
     if (-not $node) {
         Write-Warn "Node.js no esta disponible: no se compila el frontend."
-        Write-Host "         Instale Node.js LTS y repita el instalador; usara pnpm-lock.yaml sin scripts."
+        Write-Host "         Instale Node.js LTS y repita el instalador; usara package-lock.json sin scripts."
     }
     else {
-        # pnpm se ejecuta por corepack (incluido en Node): `corepack pnpm ...`
-        # descarga y usa exactamente la version fijada en "packageManager" sin
-        # necesitar privilegios de administrador ni modificar el PATH.
-        # Se desactiva el prompt de descarga de corepack (colgaria el instalador
-        # la primera vez que descarga la version de pnpm).
-        $env:COREPACK_ENABLE_DOWNLOAD_PROMPT = "0"
+        # npm viene incluido con Node y no depende de las claves de Corepack.
         Push-Location (Join-Path $root "frontend")
         try {
             # ------------------------------------------------------------------
-            # `pnpm install --frozen-lockfile --ignore-scripts`, NUNCA sin flags:
-            #   * `--frozen-lockfile` instala EXACTAMENTE lo que fija pnpm-lock.yaml
+            # `npm ci --ignore-scripts`, NUNCA `npm install` sin flags:
+            #   * `npm ci` instala EXACTAMENTE lo que fija package-lock.json
             #     y falla si esta desincronizado; no resuelve rangos ni trae una
             #     version publicada hace minutos.
             #   * `--ignore-scripts` impide preinstall/install/postinstall, el
@@ -245,10 +240,10 @@ else {
             # `frontend/.npmrc` ya declara ignore-scripts=true; la bandera se
             # repite aqui para que el control no dependa de un archivo editable.
             # ------------------------------------------------------------------
-            Write-Step "Instalando dependencias del frontend (pnpm install --frozen-lockfile --ignore-scripts)..."
-            & corepack pnpm install --frozen-lockfile --ignore-scripts
+            Write-Step "Instalando dependencias del frontend (npm ci --ignore-scripts)..."
+            & npm.cmd ci --ignore-scripts
             if ($LASTEXITCODE -ne 0) {
-                Write-Warn "pnpm install fallo. Revise que pnpm-lock.yaml este sincronizado con package.json."
+                Write-Warn "npm ci fallo. Revise que package-lock.json este sincronizado con package.json."
             }
             else {
                 Write-Ok "Dependencias del frontend instaladas sin ejecutar scripts."
@@ -266,7 +261,7 @@ else {
                 Write-Ok "Cadena de suministro verificada."
 
                 Write-Step "Compilando el frontend..."
-                & corepack pnpm run build
+                & npm.cmd run build
                 if ($LASTEXITCODE -ne 0) { Write-Warn "El build del frontend fallo; el backend seguira funcionando por API." }
                 else { Write-Ok "Frontend compilado." }
             }

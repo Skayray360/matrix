@@ -8,7 +8,7 @@ Scripts de shell para entornos no-Windows.
 en los mismos módulos Python (no duplica lógica). Subcomandos: `install`,
 `start`, `stop`, `diagnose` y `validate`. Al igual que el instalador de Windows,
 `install` usa `uv sync --frozen`,
-`corepack pnpm install --frozen-lockfile --ignore-scripts` y verifica la cadena
+`npm ci --ignore-scripts` y verifica la cadena
 de suministro antes de compilar el frontend.
 
 `validate` no tiene lanzador `.bat` en la raíz (en Windows se ejecuta con

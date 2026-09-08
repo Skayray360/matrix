@@ -71,20 +71,14 @@ cmd_install() {
     ( cd "${BACKEND}" && UV_PROJECT_ENVIRONMENT="${ROOT}/.venv" uv sync --frozen --no-dev )
     ok "Dependencias del backend sincronizadas exactamente desde uv.lock"
 
-    if command -v corepack >/dev/null 2>&1; then
-        # Desactiva el prompt de descarga de corepack (colgaria una ejecucion
-        # desatendida la primera vez que descarga la version de pnpm).
-        export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
-        # `corepack pnpm ...` usa la version fijada en package.json
-        # ("packageManager") sin privilegios de administrador.
-        # `pnpm install --frozen-lockfile --ignore-scripts`, NUNCA sin flags:
-        #   * `--frozen-lockfile` instala EXACTAMENTE lo que fija pnpm-lock.yaml
-        #     y falla si esta desincronizado.
-        #   * `--ignore-scripts` impide preinstall/install/postinstall (el vector
-        #     de los gusanos del ecosistema npm) sin depender de que
-        #     frontend/.npmrc, que es editable, siga intacto.
-        info "Instalando dependencias del frontend (pnpm install --frozen-lockfile --ignore-scripts)..."
-        ( cd "${ROOT}/frontend" && corepack pnpm install --frozen-lockfile --ignore-scripts )
+    if command -v npm >/dev/null 2>&1; then
+        # `npm ci --ignore-scripts`, NUNCA `npm install` sin flags:
+        #   * instala EXACTAMENTE lo que fija package-lock.json;
+#   * `--ignore-scripts` impide preinstall/install/postinstall (el vector
+#     de los gusanos del ecosistema npm) sin depender de que
+#     frontend/.npmrc, que es editable, siga intacto.
+        info "Instalando dependencias del frontend (npm ci --ignore-scripts)..."
+        ( cd "${ROOT}/frontend" && npm ci --ignore-scripts )
 
         info "Verificando la cadena de suministro antes de compilar..."
         if ! py -m scripts.verify_supply_chain; then
@@ -94,10 +88,10 @@ cmd_install() {
         ok "Cadena de suministro verificada"
 
         info "Compilando el frontend..."
-        ( cd "${ROOT}/frontend" && corepack pnpm run build )
+        ( cd "${ROOT}/frontend" && npm run build )
         ok "Frontend compilado sin ejecutar scripts de instalacion"
     else
-        warn "corepack/Node no disponible: el frontend no se compila"
+        warn "npm/Node no disponible: el frontend no se compila"
     fi
 
     py -m scripts.bootstrap setup

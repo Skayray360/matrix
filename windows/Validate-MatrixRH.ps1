@@ -35,10 +35,6 @@ param(
 Set-StrictMode -Version Latest
 . (Join-Path $PSScriptRoot "Common-MatrixRH.ps1")
 
-# corepack ejecuta pnpm (audit y E2E); se desactiva su prompt de descarga para
-# que la validacion sea desatendida la primera vez que baja la version de pnpm.
-$env:COREPACK_ENABLE_DOWNLOAD_PROMPT = "0"
-
 $root = Get-MatrixRoot
 $reportsDir = Join-Path $root "reports"
 $testsDir = Join-Path $reportsDir "tests"
@@ -111,15 +107,15 @@ else {
         Register-Step "e2e" 1 "el backend no arranco para los E2E"
     }
     else {
-        $corepack = Get-Command corepack -ErrorAction SilentlyContinue
-        if (-not $corepack) {
-            $results["e2e"] = [ordered]@{ status = "SKIPPED"; exit_code = 0; detail = "corepack no disponible" }
-            Write-Warn "corepack no disponible: E2E omitido."
+        $npm = Get-Command npm -ErrorAction SilentlyContinue
+        if (-not $npm) {
+            $results["e2e"] = [ordered]@{ status = "SKIPPED"; exit_code = 0; detail = "npm no disponible" }
+            Write-Warn "npm no disponible: E2E omitido."
         }
         else {
             Push-Location (Join-Path $root "frontend")
             try {
-                & corepack pnpm exec playwright test
+                & npm.cmd exec -- playwright test
                 Register-Step "e2e" $LASTEXITCODE
             }
             finally { Pop-Location }
@@ -138,12 +134,12 @@ Register-Step "secrets_scan" (Invoke-MatrixPython -Arguments @(
 Register-Step "cadena_de_suministro" (Invoke-MatrixPython -Arguments @(
         "-m", "scripts.verify_supply_chain", "--output", (Join-Path $reportsDir "security\supply_chain.json")
     ))
-if (Get-Command corepack -ErrorAction SilentlyContinue) {
+if (Get-Command npm -ErrorAction SilentlyContinue) {
     Push-Location (Join-Path $root "frontend")
     try {
         # Bloqueante: vulnerabilidades en lo que realmente se despliega.
-        & corepack pnpm audit --prod --audit-level low
-        Register-Step "pnpm_audit_produccion" $LASTEXITCODE
+        & npm.cmd audit --omit=dev --audit-level low
+        Register-Step "npm_audit_produccion" $LASTEXITCODE
     }
     finally { Pop-Location }
 }

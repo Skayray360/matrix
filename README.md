@@ -498,29 +498,28 @@ realizado una conexión real. Ver [`docs/EXTERNAL_DEPENDENCIES_STATUS.md`](docs/
 
 ---
 
-## 12-bis. Cadena de suministro (pnpm)
+## 12-bis. Cadena de suministro del frontend
 
-El gestor oficial del frontend es **pnpm** (fijado en `packageManager` de
-`frontend/package.json` y ejecutado por **corepack**, incluido en Node). **Nunca
-ejecute `npm install` ni `pnpm install` sin banderas.** Use:
+La instalacion operativa usa **npm**, incluido con Node. **Nunca ejecute
+`npm install` sin banderas.** Use:
 
 ```bash
-corepack pnpm install --frozen-lockfile --ignore-scripts
+npm ci --ignore-scripts
 ```
 
 Los gusanos del ecosistema npm (el registro es común a npm y pnpm) se propagan
 ejecutando `preinstall`/`install`/`postinstall` en el equipo que instala: roban
 credenciales del entorno y republican paquetes. `--ignore-scripts` impide que
 **su código se ejecute** aunque un paquete comprometido entre al árbol, y
-`--frozen-lockfile` instala exactamente lo que fija `pnpm-lock.yaml` (falla si
+`npm ci` instala exactamente lo que fija `package-lock.json` (falla si
 está desincronizado, no resuelve rangos). `frontend/.npmrc` ya fuerza
 `ignore-scripts=true`; el instalador y el Dockerfile repiten la bandera en la
 línea de comandos y no tienen fallback a una instalación sin fijar.
 
 > **Nota de seguridad.** Cambiar de gestor no elimina el riesgo por sí solo:
-> pnpm descarga del **mismo registro** que npm. La defensa real es
-> `ignore-scripts` + lockfile congelado + la verificación de abajo. pnpm añade
-> márgenes útiles (árbol `node_modules` estricto, sin dependencias fantasma).
+> La defensa real es `ignore-scripts` + lockfile congelado + la verificación de
+> abajo. `pnpm-lock.yaml` se conserva para compatibilidad de entregas previas,
+> pero Docker y los instaladores ya no dependen de Corepack.
 
 Verificación del árbol instalado (lista de bloqueo, scripts, indicadores de
 compromiso y reproducibilidad):

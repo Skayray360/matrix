@@ -46,10 +46,13 @@ services:
       - qdrant_data:/qdrant/storage
     networks: [matrixrh]
     healthcheck:
-      test: ["CMD-SHELL", "exit 0"]
+      # La imagen incluye bash. El socket confirma que Qdrant acepta conexiones;
+      # `exit 0` ocultaba contenedores caidos o todavia no iniciados.
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/6333'"]
       interval: 15s
       timeout: 5s
-      retries: 6
+      retries: 12
+      start_period: 10s
 
   backend:
     build:
@@ -61,7 +64,7 @@ services:
       mysql:
         condition: service_healthy
       qdrant:
-        condition: service_started
+        condition: service_healthy
     environment:
       APP_ENV: ${APP_ENV:-staging}
       APP_HOST: 0.0.0.0
