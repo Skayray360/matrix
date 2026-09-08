@@ -72,7 +72,16 @@ function Test-Security {
     Invoke-Step "Cadena de suministro" { Invoke-Backend @("-m", "scripts.verify_supply_chain") }
     Invoke-Step "Frontend: dependencias productivas" { Invoke-Frontend @("audit", "--omit=dev", "--audit-level=low") }
 }
-function Invoke-Check { Invoke-Lint; Invoke-Typecheck; Test-Backend; Test-Frontend; Build-Project; Test-Security }
+function Invoke-Check {
+    Invoke-Lint
+    Invoke-Typecheck
+    # El contrato del paquete verifica que dist exista; un clon limpio debe
+    # compilarlo antes de ejecutar las pruebas backend de release.
+    Build-Project
+    Test-Backend
+    Test-Frontend
+    Test-Security
+}
 
 switch ($Command) {
     { $_ -in "setup", "install", "bootstrap" } { Setup-Project; break }
