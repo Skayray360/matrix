@@ -178,12 +178,12 @@ def build_gates(args: argparse.Namespace) -> list[GateResult]:
          "--output", str(SECURITY_REPORTS / "secrets_scan.json")],
         cwd=BACKEND_ROOT, name="escaneo de secretos"))
 
-    # 8b. cadena de suministro (pnpm): lista de bloqueo, scripts de instalacion,
+    # 8b. cadena de suministro (npm): lista de bloqueo, scripts de instalacion,
     # indicadores de compromiso y reproducibilidad. Bloqueante.
     results.append(_run(
         [py, "-m", "scripts.verify_supply_chain",
          "--output", str(SECURITY_REPORTS / "supply_chain.json")],
-        cwd=BACKEND_ROOT, name="cadena de suministro (pnpm)"))
+        cwd=BACKEND_ROOT, name="cadena de suministro (npm)"))
 
     detect = _launcher("detect-secrets")
     if detect:
@@ -197,40 +197,36 @@ def build_gates(args: argparse.Namespace) -> list[GateResult]:
                                   detail="no instalado", blocking=False))
 
     # 9. frontend
-    # pnpm se ejecuta por corepack (`corepack pnpm ...`): usa la version fijada en
-    # package.json ("packageManager") sin depender del PATH ni de privilegios.
-    corepack = _launcher("corepack")
-    if (FRONTEND_ROOT / "node_modules").is_dir() and corepack:
-        pnpm = [*corepack, "pnpm"]
+    npm = _launcher("npm")
+    if (FRONTEND_ROOT / "node_modules").is_dir() and npm:
         # Vulnerabilidades en lo que realmente se despliega: bloqueante.
-        results.append(_run([*pnpm, "audit", "--prod", "--audit-level", "low"],
-                            cwd=FRONTEND_ROOT, name="pnpm audit (produccion)"))
+        results.append(_run([*npm, "audit", "--omit=dev", "--audit-level", "low"],
+                            cwd=FRONTEND_ROOT, name="npm audit (produccion)"))
         # Vulnerabilidades en herramientas de desarrollo: informativo, pero
         # visible. No se ocultan.
-        results.append(_run([*pnpm, "audit"], cwd=FRONTEND_ROOT,
-                            name="pnpm audit (incluye dev)", blocking=False))
-        results.append(_run([*pnpm, "--silent", "run", "test"], cwd=FRONTEND_ROOT,
+        results.append(_run([*npm, "audit"], cwd=FRONTEND_ROOT,
+                            name="npm audit (incluye dev)", blocking=False))
+        results.append(_run([*npm, "--silent", "run", "test"], cwd=FRONTEND_ROOT,
                             name="pruebas de frontend (vitest)"))
-        results.append(_run([*pnpm, "--silent", "run", "build"], cwd=FRONTEND_ROOT,
+        results.append(_run([*npm, "--silent", "run", "build"], cwd=FRONTEND_ROOT,
                             name="build del frontend (tsc + vite)"))
     else:
         for name in (
-            "pnpm audit (produccion)",
-            "pnpm audit (incluye dev)",
+            "npm audit (produccion)",
+            "npm audit (incluye dev)",
             "pruebas de frontend (vitest)",
             "build del frontend (tsc + vite)",
         ):
             results.append(GateResult(name=name, status=SKIPPED,
-                                      detail="node_modules ausente o corepack no disponible"))
+                                      detail="node_modules ausente o npm no disponible"))
 
     # 10. E2E
-    corepack_e2e = _launcher("corepack")
-    if args.with_e2e and corepack_e2e:
-        results.append(_run([*corepack_e2e, "pnpm", "exec", "playwright", "test"],
+    if args.with_e2e and npm:
+        results.append(_run([*npm, "exec", "--", "playwright", "test"],
                             cwd=FRONTEND_ROOT, name="Playwright E2E"))
     elif args.with_e2e:
         results.append(GateResult(name="Playwright E2E", status=SKIPPED,
-                                  detail="corepack no disponible"))
+                                  detail="npm no disponible"))
     else:
         results.append(GateResult(name="Playwright E2E", status=SKIPPED,
                                   detail="use --with-e2e con el backend arriba"))

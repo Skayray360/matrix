@@ -10,11 +10,11 @@
 | `setup.ts` | Configuración de Vitest + Testing Library |
 
 ```bash
-corepack pnpm test
+npm test
 ```
 ```bash
-corepack pnpm run e2e
+npm run e2e
 ```
 
 Los E2E requieren el backend arriba. Instale Chromium una vez con
-`corepack pnpm run e2e:install`. Ver `docs/E2E.md`.
+`npm run e2e:install`. Ver `docs/E2E.md`.

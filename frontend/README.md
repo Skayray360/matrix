@@ -15,27 +15,26 @@ Interfaz de Matrix RH: React 18 + TypeScript + Vite.
 
 ## Comandos
 
-El gestor oficial es **pnpm**, ejecutado por **corepack** (incluido en Node),
-con la versión fijada en `packageManager` de `package.json`.
+La instalacion operativa usa **npm**, incluido con Node.
 
 ```bash
-corepack pnpm install --frozen-lockfile --ignore-scripts
+npm ci --ignore-scripts
 ```
 ```bash
-corepack pnpm run dev
+npm run dev
 ```
 ```bash
-corepack pnpm run build
+npm run build
 ```
 ```bash
-corepack pnpm test
+npm test
 ```
 ```bash
-corepack pnpm run e2e
+npm run e2e
 ```
 
-No use `npm install` ni `pnpm install` sin banderas: el proyecto exige el árbol
-fijado por `pnpm-lock.yaml` (`--frozen-lockfile`) y bloquea los scripts de
+No use `npm install` sin banderas: el proyecto exige el arbol fijado por
+`package-lock.json` (`npm ci`) y bloquea los scripts de
 instalación (`--ignore-scripts`). El ZIP incluye `frontend/dist`; Node.js sólo
 es necesario si se va a recompilar o ejecutar las pruebas del frontend.
 

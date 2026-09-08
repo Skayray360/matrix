@@ -9,13 +9,12 @@ compilado en el mismo origen.
 - Salidas: resultados JSON, reporte HTML, trazas y capturas bajo las rutas
   configuradas en `playwright.config.ts`.
 - Dependencias: árbol reproducible instalado con
-  `corepack pnpm install --frozen-lockfile --ignore-scripts` y navegador
-  instalado con `corepack pnpm run e2e:install`.
+  `npm ci --ignore-scripts` y navegador instalado con `npm run e2e:install`.
 
 Ejecución desde `frontend/`:
 
 ```bat
-corepack pnpm run e2e
+npm run e2e
 ```
 
 Los helpers centralizan autenticación y aserciones de no fuga. Ningún spec debe

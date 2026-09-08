@@ -399,7 +399,7 @@ def check_frontend(report: PreflightReport) -> None:
     report.add(
         "frontend_build",
         OK if dist.exists() else WARN,
-        str(dist.parent) if dist.exists() else "no compilado (corepack pnpm run build)",
+        str(dist.parent) if dist.exists() else "no compilado (npm run build)",
         required=False,
     )
 
@@ -418,7 +418,7 @@ def check_supply_chain(report: PreflightReport) -> None:
             report.add(
                 "cadena_de_suministro",
                 WARN,
-                "frontend/node_modules ausente (ejecute 'corepack pnpm install --frozen-lockfile --ignore-scripts')",
+                "frontend/node_modules ausente (ejecute 'npm ci --ignore-scripts')",
                 required=False,
             )
             return

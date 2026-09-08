@@ -6,6 +6,10 @@ Documentación técnica de Matrix RH.
 
 | Documento | Contenido |
 |---|---|
+| `PROJECT_STATUS.md` | Estado verificado, evidencia y riesgos pendientes |
+| `DEVELOPER_HARNESS.md` | Harness unificado y alias por tecnologia |
+| `INSTALLATION_PACKAGE.md` | Estrategia del paquete de instalacion unificado |
+| `MODIFICATIONS_2026-09-07.md` | Alcance y registro de esta revision |
 | `ARCHITECTURE.md` | Componentes runtime, flujos y decisiones |
 | `AI_DESIGN.md` | Agentes, política de los dos modelos, anti-alucinación |
 | `RAG_DESIGN.md` | Parámetros del RAG y dónde vive cada uno en el código |

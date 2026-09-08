@@ -123,7 +123,7 @@ else {
 $dist = Join-Path $root "frontend\dist\index.html"
 if (-not (Test-Path $dist)) {
     Write-Warn "No hay build del frontend: solo estara disponible la API en $url/api/v1"
-    Write-Host "         Repita INSTALAR_MATRIX_RH.bat para compilar desde pnpm-lock.yaml."
+    Write-Host "         Repita INSTALAR_MATRIX_RH.bat para compilar desde package-lock.json."
 }
 else {
     Write-Ok "Interfaz servida same-origin desde $url"

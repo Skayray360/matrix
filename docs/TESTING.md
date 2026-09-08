@@ -39,11 +39,11 @@ set "PYTHONPATH=%CD%\backend"
 ```
 ```bat
 cd frontend
-corepack pnpm test
+npm test
 ```
 ```bat
 cd frontend
-corepack pnpm run e2e
+npm run e2e
 ```
 
 Todo junto, con evidencia:

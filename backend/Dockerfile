@@ -10,21 +10,17 @@
 # ------------------------------------------------------------------ frontend --
 FROM node:22-alpine AS frontend
 WORKDIR /build
-# pnpm se provisiona por corepack (viene con Node) y su version se fija en el
-# campo "packageManager" de package.json: la imagen usa exactamente esa version.
-# El flag desactiva el prompt de descarga de corepack (colgaria el build).
-ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
-RUN corepack enable
-COPY frontend/package.json frontend/pnpm-lock.yaml frontend/.npmrc ./
-# `pnpm install --frozen-lockfile --ignore-scripts`, nunca `pnpm install` a secas:
-#   * `--frozen-lockfile` instala exactamente lo que fija pnpm-lock.yaml y FALLA
+# npm viene con Node y evita depender del almacen de claves de Corepack.
+COPY frontend/package.json frontend/package-lock.json frontend/.npmrc ./
+# `npm ci --ignore-scripts`, nunca `npm install` a secas:
+#   * `npm ci` instala exactamente lo que fija package-lock.json y FALLA
 #     si el lockfile no esta sincronizado (no resuelve rangos ni trae una version
 #     publicada hace minutos). Una instalacion no reproducible no llega a la imagen.
 #   * `--ignore-scripts` impide preinstall/install/postinstall, el vector de
 #     propagacion de los gusanos del ecosistema npm.
-RUN pnpm install --frozen-lockfile --ignore-scripts
+RUN npm ci --ignore-scripts
 COPY frontend/ ./
-RUN pnpm run build
+RUN npm run build
 
 # ------------------------------------------------------------------- backend --
 FROM python:3.12-slim AS runtime

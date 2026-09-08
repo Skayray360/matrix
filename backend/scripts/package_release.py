@@ -193,9 +193,9 @@ def main(argv: list[str] | None = None) -> int:
         "backend/pyproject.toml",
         "backend/Dockerfile",
         "frontend/package.json",
-        # Lockfile canonico (pnpm): sin el, la instalacion en destino no es
+        # Lockfile canonico (npm): sin el, la instalacion en destino no es
         # reproducible. Se exige para no publicar un ZIP sin lockfile.
-        "frontend/pnpm-lock.yaml",
+        "frontend/package-lock.json",
         "docs/FINAL_AUDIT.md",
         "docs/EXTERNAL_DEPENDENCIES_STATUS.md",
         "reports/RELEASE_VALIDATION_1.1.0.md",
@@ -214,18 +214,15 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  - {nombre}")
         return 1
 
-    # El gestor del frontend (pnpm) debe fijarse con hash de integridad para que
-    # corepack verifique criptograficamente el binario que descarga. Sin el hash,
-    # la provision del gestor solo confia en TLS y el registro: no debe publicarse
-    # un release asi. Bloqueante a proposito (en desarrollo es solo un aviso).
+    # npm viene con Node, pero su version debe quedar declarada exactamente para
+    # que el toolchain del release sea auditable.
     from scripts.verify_supply_chain import package_manager_pin
 
-    pm, con_hash = package_manager_pin(root / "frontend")
-    if not con_hash:
-        print("SE ABORTA EL EMPAQUETADO: el gestor del frontend no fija hash de integridad.")
+    pm, valido = package_manager_pin(root / "frontend")
+    if not valido:
+        print("SE ABORTA EL EMPAQUETADO: npm no esta fijado con version exacta.")
         print(f"  packageManager actual: {pm or '(ausente)'}")
-        print("  Fije 'pnpm@<version>+sha512.<hash>' en frontend/package.json.")
-        print("  Genere el valor con: corepack use pnpm@<version>")
+        print("  Fije 'npm@<version>' en frontend/package.json.")
         return 1
 
     # El build del frontend debe viajar para que el arranque por doble clic

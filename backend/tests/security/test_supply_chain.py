@@ -59,7 +59,10 @@ def arbol(tmp_path: Path, monkeypatch):  # noqa: ANN001, ANN201
     node_modules = frontend / "node_modules"
     node_modules.mkdir(parents=True)
 
-    (frontend / "pnpm-lock.yaml").write_text("lockfileVersion: '9.0'\n", encoding="utf-8")
+    (frontend / "package-lock.json").write_text('{"lockfileVersion": 3}\n', encoding="utf-8")
+    (frontend / "package.json").write_text(
+        '{"packageManager": "npm@10.9.0"}', encoding="utf-8"
+    )
     (frontend / ".npmrc").write_text("ignore-scripts=true\n", encoding="utf-8")
 
     denylist_path = tmp_path / "denylist.yaml"
@@ -137,7 +140,10 @@ class TestScriptsDeInstalacion:
         crear_paquete(arbol, "esbuild", "0.24.2", scripts={"postinstall": "node install.js"})
 
         report = vsc.run(allowed_script_packages={"esbuild"})
-        assert [f.kind for f in report.findings] == ["script_de_instalacion_permitido"]
+        # No se toleran hallazgos adicionales: evita que una regresion quede
+        # oculta por una asercion demasiado amplia.
+        kinds = [f.kind for f in report.findings]
+        assert kinds == ["script_de_instalacion_permitido"]
 
     def test_un_script_normal_no_dispara(self, arbol: Path):
         """`build` o `test` no son vectores de instalacion."""
@@ -192,7 +198,7 @@ class TestInstalacionReproducible:
         assert "deny from all" in protection
 
     def test_exige_lockfile(self, arbol: Path):
-        (vsc.FRONTEND / "pnpm-lock.yaml").unlink()
+        (vsc.FRONTEND / "package-lock.json").unlink()
 
         report = vsc.run()
         assert report.ok is False
@@ -213,33 +219,33 @@ class TestInstalacionReproducible:
 
 
 class TestIntegridadDelGestor:
-    """`packageManager` (corepack) debe fijar pnpm con hash de integridad."""
+    """`packageManager` debe fijar npm con una version exacta."""
 
-    def test_con_hash_es_ok(self, arbol: Path):
+    def test_npm_exacto_es_ok(self, arbol: Path):
         (vsc.FRONTEND / "package.json").write_text(
-            '{"packageManager": "pnpm@9.15.9+sha512.abc123"}', encoding="utf-8"
+            '{"packageManager": "npm@10.9.0"}', encoding="utf-8"
         )
-        pm, con_hash = vsc.package_manager_pin()
-        assert con_hash is True
+        pm, valido = vsc.package_manager_pin()
+        assert (pm, valido) == ("npm@10.9.0", True)
         # No aporta hallazgos: el gestor esta correctamente fijado.
         report = vsc.Report()
         vsc.check_package_manager_pin(report)
         assert not any(
-            f.kind in ("gestor_sin_hash_integridad", "gestor_no_fijado")
+            f.kind in ("gestor_no_canonico", "gestor_no_fijado")
             for f in report.findings
         )
 
-    def test_sin_hash_avisa_pero_no_bloquea(self, arbol: Path):
+    def test_gestor_no_canonico_avisa_pero_no_bloquea(self, arbol: Path):
         (vsc.FRONTEND / "package.json").write_text(
             '{"packageManager": "pnpm@9.15.9"}', encoding="utf-8"
         )
-        pm, con_hash = vsc.package_manager_pin()
-        assert (pm, con_hash) == ("pnpm@9.15.9", False)
+        pm, valido = vsc.package_manager_pin()
+        assert (pm, valido) == ("pnpm@9.15.9", False)
         report = vsc.Report()
         vsc.check_package_manager_pin(report)
         # Aviso visible, pero NO bloqueante en desarrollo.
         assert report.ok is True
-        assert any(f.kind == "gestor_sin_hash_integridad" for f in report.findings)
+        assert any(f.kind == "gestor_no_canonico" for f in report.findings)
 
     def test_ausente_avisa(self, arbol: Path):
         (vsc.FRONTEND / "package.json").write_text("{}", encoding="utf-8")
